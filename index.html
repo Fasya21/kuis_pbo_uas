@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dasbor Kuis Interaktif PBO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals with Subtle Accents (Beige, Brown, Soft Blue) -->
+    <!-- Application Structure Plan: A dashboard-style SPA with a sidebar for navigation between a welcome screen, an interactive quiz, a full review list, and a topic analysis chart. This structure separates different user tasks (practicing, reviewing, analyzing) for better usability and provides more value than a simple linear quiz, allowing users to explore the content in multiple ways. -->
+    <!-- Visualization & Content Choices:
+        - Quiz Questions -> Interactive Quiz Form -> Radio buttons, navigation -> Focused practice -> HTML/JS.
+        - All Questions -> Scrollable Review List -> Highlighted answers -> Quick study/review -> HTML/CSS.
+        - Question Topics -> Doughnut Chart -> Hover for details -> High-level topic analysis -> Chart.js.
+        This combination supports different learning styles: active recall (quiz), passive review (list), and meta-cognitive analysis (chart). -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f5f5f4; /* Warm Neutral: Stone 100 */
+        }
+        .sidebar-link {
+            transition: all 0.2s ease-in-out;
+        }
+        .sidebar-link.active {
+            background-color: #0369a1; /* Accent: Sky 700 */
+            color: white;
+            font-weight: 600;
+        }
+        .btn-primary {
+            background-color: #0ea5e9; /* Accent: Sky 500 */
+            color: white;
+            transition: background-color 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: #0284c7; /* Accent: Sky 600 */
+        }
+        .btn-secondary {
+            background-color: #e5e7eb; /* Gray 200 */
+            color: #374151; /* Gray 700 */
+            transition: background-color 0.2s;
+        }
+        .btn-secondary:hover {
+            background-color: #d1d5db; /* Gray 300 */
+        }
+        /* Custom radio button styles */
+        .custom-radio:checked {
+            background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='8' cy='8' r='3'/%3e%3c/svg%3e");
+            border-color: #0ea5e9;
+            background-color: #0ea5e9;
+        }
+        .custom-radio:focus {
+            box-shadow: none;
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+            --tw-ring-color: #0ea5e9;
+        }
+        .correct-answer {
+            background-color: #dcfce7; /* Green 100 */
+            border-left: 4px solid #22c55e; /* Green 500 */
+        }
+        .user-correct {
+            background-color: #dcfce7; /* Green 100 */
+        }
+        .user-incorrect {
+            background-color: #fee2e2; /* Red 100 */
+        }
+        .correct-answer-text {
+            color: #166534; /* Green 800 */
+            font-weight: 600;
+        }
+        .incorrect-answer-text {
+            color: #991b1b; /* Red 800 */
+            text-decoration: line-through;
+        }
+    </style>
+</head>
+<body class="text-stone-800">
+
+    <div class="flex flex-col md:flex-row min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-full md:w-64 bg-stone-800 text-stone-100 p-6 flex flex-col">
+            <h1 class="text-2xl font-bold mb-8 text-center md:text-left">Kuis PBO Java</h1>
+            <nav class="flex-grow">
+                <ul class="space-y-2">
+                    <li><a href="#" id="nav-home" class="sidebar-link active flex items-center p-3 rounded-lg hover:bg-stone-700">Beranda</a></li>
+                    <li><a href="#" id="nav-quiz" class="sidebar-link flex items-center p-3 rounded-lg hover:bg-stone-700">Mulai Kuis</a></li>
+                    <li><a href="#" id="nav-review" class="sidebar-link flex items-center p-3 rounded-lg hover:bg-stone-700">Tinjau Semua Soal</a></li>
+                    <li><a href="#" id="nav-analysis" class="sidebar-link flex items-center p-3 rounded-lg hover:bg-stone-700">Analisis Topik</a></li>
+                </ul>
+            </nav>
+            <div class="text-xs text-stone-400 text-center mt-6">
+                <p>&copy; 2025 Dibuat untuk Tujuan Edukasi</p>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-6 sm:p-10">
+            <!-- Home View -->
+            <div id="home-view" class="view">
+                <div class="bg-white p-8 rounded-xl shadow-md">
+                    <h2 class="text-3xl font-bold text-stone-900 mb-4">Selamat Datang di Dasbor Kuis Interaktif PBO!</h2>
+                    <p class="text-stone-600 mb-6">Aplikasi ini dirancang untuk membantu Anda mempelajari dan menguji pemahaman Anda tentang konsep-konsep Pemrograman Berorientasi Objek (PBO) dalam bahasa Java. Anda dapat menggunakan berbagai fitur yang tersedia untuk pengalaman belajar yang optimal.</p>
+                    <div class="grid md:grid-cols-3 gap-6">
+                        <div class="bg-stone-50 p-6 rounded-lg border border-stone-200">
+                            <h3 class="font-bold text-lg mb-2 text-sky-700">Mulai Kuis</h3>
+                            <p class="text-sm text-stone-600">Uji pengetahuan Anda dengan mengerjakan 50 soal pilihan ganda. Jawab satu per satu dan lihat hasilnya di akhir sesi.</p>
+                        </div>
+                        <div class="bg-stone-50 p-6 rounded-lg border border-stone-200">
+                            <h3 class="font-bold text-lg mb-2 text-sky-700">Tinjau Semua Soal</h3>
+                            <p class="text-sm text-stone-600">Lihat kembali seluruh soal beserta jawaban yang benar. Fitur ini cocok untuk sesi belajar dan menghafal.</p>
+                        </div>
+                        <div class="bg-stone-50 p-6 rounded-lg border border-stone-200">
+                            <h3 class="font-bold text-lg mb-2 text-sky-700">Analisis Topik</h3>
+                            <p class="text-sm text-stone-600">Dapatkan wawasan tentang distribusi soal berdasarkan kategori topik untuk mengetahui area mana yang paling banyak diujikan.</p>
+                        </div>
+                    </div>
+                     <button id="start-quiz-from-home" class="btn-primary font-bold py-3 px-6 rounded-lg mt-8 text-lg">Mulai Kerjakan Kuis Sekarang &rarr;</button>
+                </div>
+            </div>
+
+            <!-- Quiz View -->
+            <div id="quiz-view" class="view hidden">
+                <div id="quiz-container" class="bg-white p-8 rounded-xl shadow-md max-w-4xl mx-auto">
+                    <!-- Quiz content will be injected here by JS -->
+                </div>
+                <div id="quiz-results" class="bg-white p-8 rounded-xl shadow-md max-w-4xl mx-auto hidden">
+                    <!-- Quiz results will be injected here by JS -->
+                </div>
+            </div>
+            
+            <!-- Review View -->
+            <div id="review-view" class="view hidden">
+                 <div class="bg-white p-8 rounded-xl shadow-md">
+                    <h2 class="text-3xl font-bold text-stone-900 mb-6">Tinjau Semua Soal</h2>
+                    <div id="review-container" class="space-y-6">
+                        <!-- Review questions will be injected here by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analysis View -->
+            <div id="analysis-view" class="view hidden">
+                <div class="bg-white p-8 rounded-xl shadow-md">
+                    <h2 class="text-3xl font-bold text-stone-900 mb-4">Analisis Topik Soal</h2>
+                    <p class="text-stone-600 mb-6">Bagan berikut menunjukkan distribusi 50 soal berdasarkan kategori topik PBO. Gunakan ini untuk memfokuskan area belajar Anda pada topik yang paling sering muncul.</p>
+                    <div class="chart-container relative h-96 w-full max-w-xl mx-auto">
+                        <canvas id="topicAnalysisChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const questions = [
+                { id: 1, question: "Manakah dari berikut ini yang merupakan cara yang benar untuk memanggil metode `needOil()` yang diganti dari `superclass Robot` di `subclass SqueakyRobot`?", options: ["`Robot.needOil()||SqueakyRobot;`", "`SqueakyRobot.needOil();`", "`super.needOil();`", "`needOil(Robot);`", "Semua yang di atas"], correctAnswer: 2, topic: "Pewarisan & Polimorfisme" },
+                { id: 2, question: "Manakah dari pernyataan berikut tentang metode statis yang benar?", options: ["Mereka dapat ditimpa oleh subclass", "Mereka tidak dapat mengakses variabel statis yang dinyatakan di luar metode", "Mereka ada satu kali per class", "Mereka ada sekali dalam setiap instance", "Mereka dapat mengakses variabel instance apa pun"], correctAnswer: 2, topic: "Member Statis" },
+                { id: 3, question: "Manakah dari berikut ini yang merupakan definisi dari konstruktor?", options: ["Metode khusus yang digunakan untuk menetapkan nilai awal ke variabel instance", "Cara untuk memanggil metode dengan sejumlah argumen variabel menggunakan elipsis", "Variabel dalam deklarasi metode yang dilewatkan menuju metode", "Kata kunci yang menentukan aksesibilitas kode"], correctAnswer: 0, topic: "Dasar OOP" },
+                { id: 4, question: "Manakah deskripsi paling akurat dari filosofi `reuse code`?", options: ["Filosofi pemrograman yang mendukung pencurian kode milik teman se-class Anda", "Filosofi pemrograman yang mendukung sikap tidak peduli tentang keamanan kode", "Filosofi pemrograman yang mendorong perlindungan data dan menyembunyikan pelaksanaan untuk mempertahankan integritas data dan metode", "Filosofi pemrograman yang mendukung pengodean yang lebih sederhana dan lebih efisien dengan menggunakan kode yang ada untuk aplikasi baru"], correctAnswer: 3, topic: "Konsep PBO" },
+                { id: 5, question: "Identifikasi kelas driver yang menginisialisasi karyawan Jane dan Brandon dengan benar. Kelas Karyawan ada di bawah.\n\n```java\npublic class Employee {\n  private String name;\n  private int age;\n  private double salary;\n  public Employee(String n, int a, double s) {\n    name = n;\n    age = a;\n    salary = s;\n  }\n  //metode untuk kelas ini akan ada di sini\n}\n```", options: ["```java\npublic class driver_class {\n  public static void main(String[] args) {\n    Employee Jane = new Employee(\"Jane\", 48, 35.00);\n    Employee Brandon = new Employee(\"Brandon\", 36, 20.00);\n  }\n}\n```", "```java\npublic class driver_class {\n  public static void main(String[] args) {\n    Employee(\"Jane\", 48, 35.00); Karyawan(\"Brandon\", 36, 20.00);\n  }\n}\n```", "```java\npublic class driver_class {\n  public Karyawan{\n    Jane = new Karyawan(\"Jane\", 48, 35.00);\n    Brandon = new Karyawan(\"Brandon\", 36, 20.00);\n  }\n}\n```", "```java\npublic class Karyawan {\n  public class driver-class{\n    Karyawan Jane = new Karyawan();\n    Karyawan Brandon = new Karyawan();\n  }\n}\n```"], correctAnswer: 0, topic: "Dasar OOP" },
+                { id: 6, question: "Segmen kode mana yang benar untuk memanggil metode `counter` dengan parameter argumen variabel integer?", options: ["`counter(String a, int b);`", "`counter(\"one\", \"two\", String[] nums);`", "`counter(int[] numbers);`", "`counter(1, 5, 8, 17, 11000005);`"], correctAnswer: 3, topic: "Sintaks & Aturan Dasar" },
+                { id: 7, question: "Misalkan `str1` dan `str2` adalah dua string. Manakah dari pernyataan atau ekspresi yang valid?", options: ["Semua di atas", "`String str3 = str1 - str2;`", "`str1 >= str2`", "`str1 += str2;`", "`str1 = str2;`"], correctAnswer: 3, topic: "Struktur Data" },
+                { id: 8, question: "Manakah yang mendeklarasikan array 2D dengan 2 baris dan 3 kolom?", options: ["`String[][] values = {\"apples\", \"oranges\", \"pears\"};`", "`String[][] values = new String[2][3];`", "`String[][] values = new String[3][2];`", "`String[][] values;`", "Semua di atas"], correctAnswer: 1, topic: "Struktur Data" },
+                { id: 9, question: "Apa yang terjadi jika program membagi 1 juta dolar dengan 0 karyawan?", options: ["Setiap karyawan dapat $0", "Terjadi pengecualian karena pembagian dengan nol", "Pembuat program membuktikan nilainya", "Terjadi kesalahan fatal"], correctAnswer: 1, topic: "Exception Handling" },
+                { id: 10, question: "Apa itu hierarki?", options: ["Filosofi reuse code", "Kata kunci akses subclass ke parent class", "Filosofi perlindungan data", "Struktur pengategorian hubungan konsep"], correctAnswer: 3, topic: "Konsep PBO" },
+                { id: 11, question: "Benarkah metode statis dapat membaca variabel instance?", options: ["Salah", "Benar"], correctAnswer: 0, topic: "Member Statis" },
+                { id: 12, question: "Apa definisi kata kunci `package`?", options: ["Mengawali nama kelas", "Mengidentifikasi class luar", "Semua di atas", "Mendefinisikan lokasi kelas dan kontrol akses", "Tidak di atas"], correctAnswer: 3, topic: "Sintaks & Aturan Dasar" },
+                { id: 13, question: "Manakah yang menginisialisasi Scanner untuk membaca input konsol?", options: ["`Scanner in = new Scanner(\"System.in\");`", "Semua di atas", "`System.in in = new Scanner();`", "`Scanner in = new Scanner(System.in);`", "`Scanner in = Scanner(System.in);`"], correctAnswer: 3, topic: "Java API" },
+                { id: 14, question: "Apa output kode berikut?\n```java\nint num[] = {7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1};\nfor (int i = 0; i < i; i = i + 4) {\n  System.out.print(num[i]);\n}\n```", options: ["7766554433221", "Kode tidak mengompilasi", "7531", "Tidak ada output"], correctAnswer: 3, topic: "Struktur Kontrol" },
+                { id: 15, question: "Berapa iterasi loop, nilai `x`, dan `count` setelah loop selesai?\n```java\nint count = 17;\nint x = 1;\nwhile (count > x) {\n  x *= 3;\n  count -= 3;\n}\n```", options: ["3; 9; 11", "5; 27; 8", "4; 8; 27", "5; 32; 5", "3; 27; 8"], correctAnswer: 4, topic: "Struktur Kontrol" },
+                { id: 16, question: "Benarkah `String str = String(\"Hello\");` adalah pembuatan instance objek?", options: ["Salah", "Benar"], correctAnswer: 0, topic: "Sintaks & Aturan Dasar" },
+                { id: 17, question: "Apa itu loop?", options: ["Kata kunci untuk melewati kode", "Segmen kode dijalankan sekali", "Tidak di atas", "Semua di atas", "Serangkaian logika yang diulang hingga kondisi terpenuhi"], correctAnswer: 4, topic: "Struktur Kontrol" },
+                { id: 18, question: "Benarkah untuk `if-else` dan `for`, saat kondisi terpenuhi, konstruk keluar?", options: ["Salah", "Benar"], correctAnswer: 0, topic: "Struktur Kontrol" },
+                { id: 19, question: "Benarkah satu class dapat memiliki banyak konstruktor?", options: ["Benar", "Salah"], correctAnswer: 0, topic: "Dasar OOP" },
+                { id: 20, question: "Di mana hasil aplikasi Java ditampilkan di IDE?", options: ["Jendela Editor", "Tampilan Konsol", "Tidak di atas", "Tampilan Debug", "Daftar Tugas"], correctAnswer: 1, topic: "Sintaks & Aturan Dasar" },
+                { id: 21, question: "Manakah pemodifikasi akses yang tidak dapat digunakan dengan variabel statis?", options: ["`friendly`", "`public`", "`protected`", "`private`", "`default`"], correctAnswer: 0, topic: "Sintaks & Aturan Dasar" },
+                { id: 22, question: "Manakah yang menampilkan 12345?\nI. `System.out.println(\"123 * 100 + 45\");`\nII. `System.out.println(\"123\" + \"45\");`\nIII. `System.out.println(12 + \"345\");`", options: ["Semua di atas", "Hanya I dan II", "Hanya I", "Tidak di atas", "Hanya II dan III"], correctAnswer: 4, topic: "Sintaks & Aturan Dasar" },
+                { id: 23, question: "Manakah deskripsi kata kunci `super` yang benar?", options: ["Mengizinkan subclass mengakses parent class", "Membatasi akses dalam class", "Memungkinkan akses dari mana saja", "Menandai akhir program"], correctAnswer: 0, topic: "Pewarisan & Polimorfisme" },
+                { id: 24, question: "Manakah deklarasi objek String bernama name?", options: ["`int name;`", "`double name;`", "`String name;`", "`String name`"], correctAnswer: 2, topic: "Sintaks & Aturan Dasar" },
+                { id: 25, question: "_________ digunakan untuk mengatur file Java terkait.", options: ["Koleksi", "Ruang kerja", "Kumpulan Sampel", "Paket", "Proyek"], correctAnswer: 4, topic: "Sintaks & Aturan Dasar" },
+                { id: 26, question: "Manakah yang benar tentang class abstrak? (Pilih dua)", options: ["Dapat dibuat objeknya", "Diidentifikasi oleh kata kunci abstract", "Dapat dibuat referensinya", "JVM tidak membedakannya dari class konkret"], correctAnswer: [1, 2], topic: "Pewarisan & Polimorfisme" },
+                { id: 27, question: "Benarkah fragmen kode ini mengimplementasikan switch dengan benar?\n```java\ndefault(input) switch \"+\":\nanswer=num; break;\ncase \"/\": answer=num;\nbreak;\n\"default\"\nSystem.out.println(\"Invalid input\");\n```", options: ["Benar", "Salah"], correctAnswer: 1, topic: "Struktur Kontrol" },
+                { id: 28, question: "Benarkah deklarasi array `;int x[] = int[10];` valid?", options: ["Benar", "Salah"], correctAnswer: 1, topic: "Sintaks & Aturan Dasar" },
+                { id: 29, question: "Benarkah metode statis dapat membaca variabel instance?", options: ["Benar", "Salah"], correctAnswer: 1, topic: "Member Statis" },
+                { id: 30, question: "Manakah kode Java yang tidak benar?", options: ["`double x = Math.sqrt(16);`", "Tidak di atas", "`x = Math.PI * 5.0;`", "`double x = Math.pow;`", "`double x = Math.pow(3,4) * 5.0;`"], correctAnswer: 3, topic: "Java API" },
+                { id: 31, question: "Benarkah deklarasi `Tree grandfatherT = new Oak();` valid jika `Oak extends Tree`?", options: ["Salah", "Benar"], correctAnswer: 1, topic: "Pewarisan & Polimorfisme" },
+                { id: 32, question: "Manakah alasan untuk melewatkan objek ke metode?", options: ["Akses informasi dalam objek", "Tidak di atas", "Membuat perubahan ke objek", "Membandingkan objek", "Semua di atas"], correctAnswer: 4, topic: "Dasar OOP" },
+                { id: 33, question: "Manakah yang bukan nama variabel valid?", options: ["`to_be_or_not_to_be`", "`R2d2`", "`dgo2sleep`", "`4geeks`", "Tidak di atas"], correctAnswer: 3, topic: "Sintaks & Aturan Dasar" },
+                { id: 34, question: "Benarkah konstruktor harus memiliki setidaknya satu parameter?", options: ["Benar", "Salah"], correctAnswer: 1, topic: "Dasar OOP" },
+                { id: 35, question: "Manakah yang membuat objek dari class Animal?", options: ["`Animal dog = Animal(50,30);`", "`Animal dog = new Animal();`", "`Animal dog = new Animal(50,30);`", "`Animal dog = Animal();`", "`Animal dog = new Animal(50);`"], correctAnswer: 2, topic: "Dasar OOP" },
+                { id: 36, question: "Apa definisi kata kunci import?", options: ["Tidak di atas", "Semua di atas", "Mengidentifikasi class luar yang digunakan", "Menentukan lokasi kelas dan kontrol akses", "Mengawali nama kelas"], correctAnswer: 2, topic: "Sintaks & Aturan Dasar" },
+                { id: 37, question: "Benarkah dua variabel diperlukan untuk konversi satuan?", options: ["Salah", "Benar"], correctAnswer: 1, topic: "Sintaks & Aturan Dasar" },
+                { id: 38, question: "Benarkah kode `String[][] array = {{\"a\",\"b\",\"c\"},{\"d\",\"e\",\"f\"}};` menginisialisasi array 2D?", options: ["Salah", "Benar"], correctAnswer: 1, topic: "Struktur Data" },
+                { id: 39, question: "Apa output `System.out.println(ocean.indexOf('a'));` jika `ocean = \"Atlantic Ocean\"`?", options: ["3", "0", "2", "12", "11"], correctAnswer: 0, topic: "Struktur Data" },
+                { id: 40, question: "Benarkah operator `==` selalu benar untuk string identik?", options: ["Benar", "Salah"], correctAnswer: 1, topic: "Struktur Data" },
+                { id: 41, question: "Bagaimana menangani koordinat di luar kastil? (Pilih dua)", options: ["2 & 3", "3 & 4", "1 & 3", "2 & 4", "1 & 2"], correctAnswer: 1, topic: "Exception Handling" },
+                { id: 42, question: "Segmen kode mana yang mendefinisikan metode dengan dua objek `Tree` sebagai parameter?", options: ["Semua di atas", "`void bloom(Tree pine, Tree oak) {//code}`", "Tidak di atas", "`Tree bloom(pine, oak) {//code}`", "`void bloom, Tree pine, Tree oak {//code}`"], correctAnswer: 1, topic: "Dasar OOP" },
+                { id: 43, question: "Benarkah setiap `{` harus ada `}` agar program terkompilasi?", options: ["Salah", "Benar"], correctAnswer: 1, topic: "Sintaks & Aturan Dasar" },
+                { id: 44, question: "Apa perbedaan `=` dan `==`?", options: ["`=` untuk penugasan, `==` untuk perbandingan", "`==` untuk penugasan, `=` untuk deklarasi", "Tidak ada perbedaan", "`=` untuk if, `==` untuk loop"], correctAnswer: 0, topic: "Sintaks & Aturan Dasar" },
+                { id: 45, question: "Apa kegunaan pengecualian di Java?", options: ["Tidak berguna", "Membantu kompilasi lebih cepat", "Memperbaiki kesalahan dan menangani kasus luar biasa", "Membuat program lebih mudah"], correctAnswer: 2, topic: "Exception Handling" },
+                { id: 46, question: "Lengkapi kalimat: Konstruktor...", options: ["Tidak di atas", "Harus punya nama sama dengan class", "Digunakan membuat objek", "Semua di atas", "Dapat dideklarasikan publik"], correctAnswer: 3, topic: "Dasar OOP" },
+                { id: 47, question: "Manakah yang tidak dapat digunakan sebagai parameter?", options: ["Objek", "Konstruktor", "Bilangan bulat", "String", "Array"], correctAnswer: 1, topic: "Sintaks & Aturan Dasar" },
+                { id: 48, question: "Pesan error apa yang menunjukkan variabel tidak dikenali?", options: ["Semua di atas", "Tidak di atas", "Kesalahan sintaks", "`variableName` tidak dapat diselesaikan", "Metode tidak ditentukan"], correctAnswer: 3, topic: "Exception Handling" },
+                { id: 49, question: "Manakah panggilan metode yang benar (asumsikan method `calculate(int, int)` ada)?", options: ["`int x = t.calculate();`", "`ThisClass t = new ThisClass(); int x = t.calculate(3);`", "`ThisClass t = new ThisClass(); int x = t.calculate();`", "`ThisClass t = new ThisClass(); int x = t.calculate(3,4);`", "`int x = calculate(3,4);`"], correctAnswer: 3, topic: "Dasar OOP" },
+                { id: 50, question: "Apa yang menghasilkan file `.class` dari kode Java?", options: ["Mengemas", "Menyusun", "Menghimpunkan", "Mengumpulkan", "Memublikasikan"], correctAnswer: 1, topic: "Sintaks & Aturan Dasar" }
+            ];
+
+            let userAnswers = new Array(questions.length).fill(null);
+            let currentQuestionIndex = 0;
+            let chartInstance = null;
+            let quizInProgress = false;
+
+            const views = document.querySelectorAll('.view');
+            const navLinks = document.querySelectorAll('.sidebar-link');
+            const quizContainer = document.getElementById('quiz-container');
+            const quizResultsContainer = document.getElementById('quiz-results');
+            const reviewContainer = document.getElementById('review-container');
+
+            function showView(viewId) {
+                views.forEach(view => view.classList.add('hidden'));
+                document.getElementById(viewId).classList.remove('hidden');
+                
+                navLinks.forEach(link => link.classList.remove('active'));
+                const activeLink = document.getElementById(`nav-${viewId.split('-')[0]}`);
+                if (activeLink) {
+                    activeLink.classList.add('active');
+                }
+            }
+
+            function renderQuestion() {
+                const question = questions[currentQuestionIndex];
+                const isMultiChoice = Array.isArray(question.correctAnswer);
+                const inputType = isMultiChoice ? 'checkbox' : 'radio';
+
+                let optionsHtml = question.options.map((option, index) => {
+                    const isChecked = isMultiChoice
+                        ? userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].includes(index)
+                        : userAnswers[currentQuestionIndex] === index;
+
+                    return `
+                        <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-stone-100 transition-colors">
+                            <input type="${inputType}" name="question-${question.id}" value="${index}" class="custom-radio h-5 w-5 mr-4 text-sky-600 border-gray-300 focus:ring-sky-500" ${isChecked ? 'checked' : ''}>
+                            <span class="text-stone-700 flex-1"><pre class="whitespace-pre-wrap font-sans">${escapeHtml(option)}</pre></span>
+                        </label>
+                    `;
+                }).join('');
+
+                quizContainer.innerHTML = `
+                    <div class="mb-4">
+                        <p class="text-sm font-semibold text-sky-600">Soal ${currentQuestionIndex + 1} dari ${questions.length}</p>
+                        <h3 class="text-xl font-semibold mt-1"><pre class="whitespace-pre-wrap font-sans">${question.question}</pre></h3>
+                        ${isMultiChoice ? '<p class="text-sm text-stone-500 mt-2">(Pilih dua jawaban yang benar)</p>' : ''}
+                    </div>
+                    <div class="space-y-4">${optionsHtml}</div>
+                    <div class="flex justify-between mt-8">
+                        <button id="prev-btn" class="btn-secondary font-bold py-2 px-6 rounded-lg" ${currentQuestionIndex === 0 ? 'disabled' : ''}>Sebelumnya</button>
+                        <button id="next-btn" class="btn-primary font-bold py-2 px-6 rounded-lg">${currentQuestionIndex === questions.length - 1 ? 'Selesai Kuis' : 'Selanjutnya'}</button>
+                    </div>
+                `;
+
+                document.getElementById('prev-btn').addEventListener('click', prevQuestion);
+                document.getElementById('next-btn').addEventListener('click', nextQuestion);
+                quizContainer.querySelectorAll(`input[type="${inputType}"]`).forEach(input => {
+                    input.addEventListener('change', (e) => handleAnswerSelection(e.target, isMultiChoice));
+                });
+            }
+            
+            function handleAnswerSelection(target, isMultiChoice) {
+                const selectedValue = parseInt(target.value);
+                if (isMultiChoice) {
+                    if (!userAnswers[currentQuestionIndex]) {
+                        userAnswers[currentQuestionIndex] = [];
+                    }
+                    if (target.checked) {
+                        userAnswers[currentQuestionIndex].push(selectedValue);
+                    } else {
+                        userAnswers[currentQuestionIndex] = userAnswers[currentQuestionIndex].filter(v => v !== selectedValue);
+                    }
+                } else {
+                    userAnswers[currentQuestionIndex] = selectedValue;
+                }
+            }
+
+            function startQuiz() {
+                quizInProgress = true;
+                currentQuestionIndex = 0;
+                userAnswers.fill(null);
+                quizContainer.classList.remove('hidden');
+                quizResultsContainer.classList.add('hidden');
+                renderQuestion();
+                showView('quiz-view');
+            }
+
+            function prevQuestion() {
+                if (currentQuestionIndex > 0) {
+                    currentQuestionIndex--;
+                    renderQuestion();
+                }
+            }
+
+            function nextQuestion() {
+                if (currentQuestionIndex < questions.length - 1) {
+                    currentQuestionIndex++;
+                    renderQuestion();
+                } else {
+                    finishQuiz();
+                }
+            }
+
+            function finishQuiz() {
+                quizInProgress = false;
+                let score = 0;
+                questions.forEach((q, index) => {
+                    const userAnswer = userAnswers[index];
+                    if (Array.isArray(q.correctAnswer)) { // For multiple correct answers (checkbox)
+                        const correctSet = new Set(q.correctAnswer);
+                        const userSet = new Set(userAnswer || []);
+                        if (correctSet.size === userSet.size && [...correctSet].every(item => userSet.has(item))) {
+                            score++;
+                        }
+                    } else { // For single correct answer (radio)
+                        if (userAnswer === q.correctAnswer) {
+                            score++;
+                        }
+                    }
+                });
+
+                let resultsHtml = `
+                    <h2 class="text-3xl font-bold text-center mb-2">Kuis Selesai!</h2>
+                    <p class="text-center text-xl text-stone-600 mb-6">Skor Anda: <span class="font-bold text-sky-600">${score} / ${questions.length}</span></p>
+                    <div class="space-y-6">
+                `;
+
+                questions.forEach((q, index) => {
+                    const userAnswer = userAnswers[index];
+                    const isMulti = Array.isArray(q.correctAnswer);
+                    let isCorrect = false;
+                    
+                    if (isMulti) {
+                        const correctSet = new Set(q.correctAnswer);
+                        const userSet = new Set(userAnswer || []);
+                         if (correctSet.size === userSet.size && [...correctSet].every(item => userSet.has(item))) {
+                            isCorrect = true;
+                        }
+                    } else {
+                        if (userAnswer === q.correctAnswer) {
+                           isCorrect = true;
+                        }
+                    }
+                    
+                    const resultClass = isCorrect ? 'user-correct' : 'user-incorrect';
+                    
+                    resultsHtml += `
+                        <div class="p-4 rounded-lg border ${resultClass}">
+                            <p class="font-semibold mb-2">${index + 1}. <pre class="whitespace-pre-wrap font-sans inline">${q.question}</pre></p>
+                            <div class="pl-4 border-l-2 border-stone-300 ml-2">
+                                <p class="text-sm">Jawaban Anda: <span class="${userAnswer === null ? 'text-stone-500' : ''}">${userAnswer === null ? 'Tidak dijawab' : (isMulti ? (userAnswer.map(i => q.options[i]).join(', ') || 'Tidak dijawab') : escapeHtml(q.options[userAnswer]))}</span></p>
+                                ${!isCorrect ? `<p class="text-sm correct-answer-text">Jawaban Benar: ${isMulti ? q.correctAnswer.map(i => q.options[i]).join(', ') : escapeHtml(q.options[q.correctAnswer])}</p>` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                resultsHtml += `</div><div class="text-center mt-8"><button id="restart-quiz" class="btn-primary font-bold py-3 px-6 rounded-lg">Ulangi Kuis</button></div>`;
+                
+                quizContainer.classList.add('hidden');
+                quizResultsContainer.innerHTML = resultsHtml;
+                quizResultsContainer.classList.remove('hidden');
+
+                document.getElementById('restart-quiz').addEventListener('click', startQuiz);
+            }
+            
+            function renderReview() {
+                reviewContainer.innerHTML = questions.map((q, index) => {
+                    const isMulti = Array.isArray(q.correctAnswer);
+                    const correctAnswerText = isMulti
+                        ? q.correctAnswer.map(i => `<li>${escapeHtml(q.options[i])}</li>`).join('')
+                        : escapeHtml(q.options[q.correctAnswer]);
+
+                    return `
+                        <div class="p-4 bg-stone-50 rounded-lg border border-stone-200">
+                           <p class="font-semibold mb-3">${index + 1}. <pre class="whitespace-pre-wrap font-sans inline">${q.question}</pre></p>
+                           <div class="p-3 correct-answer rounded">
+                             <h4 class="text-sm font-semibold text-stone-700 mb-1">Jawaban Benar:</h4>
+                             ${isMulti ? `<ul class="list-disc pl-5 correct-answer-text">${correctAnswerText}</ul>` : `<p class="correct-answer-text">${correctAnswerText}</p>`}
+                           </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            function renderAnalysisChart() {
+                if (chartInstance) {
+                    chartInstance.destroy();
+                }
+
+                const topicCounts = questions.reduce((acc, q) => {
+                    acc[q.topic] = (acc[q.topic] || 0) + 1;
+                    return acc;
+                }, {});
+
+                const labels = Object.keys(topicCounts);
+                const data = Object.values(topicCounts);
+
+                const ctx = document.getElementById('topicAnalysisChart').getContext('2d');
+                chartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Jumlah Soal per Topik',
+                            data: data,
+                            backgroundColor: [
+                                '#0ea5e9', // sky-500
+                                '#f59e0b', // amber-500
+                                '#10b981', // emerald-500
+                                '#8b5cf6', // violet-500
+                                '#ec4899', // pink-500
+                                '#6366f1', // indigo-500
+                                '#f43f5e', // rose-600
+                                '#84cc16'  // lime-500
+                            ],
+                            borderColor: '#f5f5f4', // stone-100
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed !== null) {
+                                            label += context.parsed + ' soal';
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // Navigation event listeners
+            document.getElementById('nav-home').addEventListener('click', (e) => { e.preventDefault(); showView('home-view'); });
+            document.getElementById('start-quiz-from-home').addEventListener('click', startQuiz);
+            document.getElementById('nav-quiz').addEventListener('click', (e) => { e.preventDefault(); if (!quizInProgress) startQuiz(); else showView('quiz-view'); });
+            document.getElementById('nav-review').addEventListener('click', (e) => { e.preventDefault(); renderReview(); showView('review-view'); });
+            document.getElementById('nav-analysis').addEventListener('click', (e) => { e.preventDefault(); showView('analysis-view'); renderAnalysisChart(); });
+
+            // Initial view
+            showView('home-view');
+        });
+    </script>
+</body>
+</html>
